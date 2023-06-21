@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -12,8 +12,13 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { useSelector, useDispatch } from 'react-redux'
+import { registerUser } from '../redux/usersSlice'
 
 export default function Register() {
+
+  const users = useSelector( state => state.users)
+  const dispatch = useDispatch()
 
   const [pwdMatch, setPwdMatch] = useState({
     error: false,
@@ -31,16 +36,20 @@ export default function Register() {
       password: data.get('password'),
     };
 
-    userObj.password !== data.get('password2') ? 
-    setPwdMatch({
-      error: true,
-      message: "Passwords do not Match"
-    })
-    :
-    setPwdMatch({
-      error: false,
-      message: ''
-    })
+    if (userObj.password !== data.get('password2')) {
+      setPwdMatch({
+        error: true,
+        message: "Passwords do not Match"
+      })
+    } else {
+      setPwdMatch({
+          error: false,
+          message: ''
+        })
+    }
+    
+  
+    (userObj.password === data.get('password2')) && dispatch(registerUser(userObj))
 
   };
 
