@@ -13,17 +13,38 @@ import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { useSelector, useDispatch } from 'react-redux'
-import { registerUser } from '../redux/usersSlice'
+import { registerUser, resetStatus } from '../redux/usersSlice'
+import { CircularProgress } from '@mui/material';
+import { useNavigate } from 'react-router-dom'
+import { registrationValidator } from '../lib/validator';
 
 export default function Register() {
 
   const users = useSelector( state => state.users)
+  const status = useSelector( state => state.users.status)
   const dispatch = useDispatch()
+  const navigate = useNavigate()
+
+  React.useEffect(() => {
+    if (status === 'fulfilled') {
+      dispatch(resetStatus())
+      navigate("/login", {replace: true})
+    }
+  })
 
   const [pwdMatch, setPwdMatch] = useState({
     error: false,
     message: ''
   })
+  
+  const [isValid, setIsValid] = useState({
+    firstname: {error: false, message: ''},
+    lastname: {error: false, message: ''},
+    email: {error: false, message: ''},
+    password: {error: false, message: ''},
+  })
+
+
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -36,7 +57,10 @@ export default function Register() {
       password: data.get('password'),
     };
 
+    let isErrors = false;
+    
     if (userObj.password !== data.get('password2')) {
+      isErrors = true
       setPwdMatch({
         error: true,
         message: "Passwords do not Match"
@@ -46,17 +70,46 @@ export default function Register() {
           error: false,
           message: ''
         })
+   
+    }
+
+    const validatorObj = registrationValidator(userObj)
+
+  
+    
+    // iterates through the validatorObj and checks if there any errors are true
+    for (const key in validatorObj) {
+      if(validatorObj[key].error) {
+        isErrors = true
+      }
     }
     
-  
+    isErrors ? setIsValid(validatorObj)
+    : 
     (userObj.password === data.get('password2')) && dispatch(registerUser(userObj))
+
+
+  //  (userObj.password !== data.get('password2')) ?
+  //     setPwdMatch({
+  //       error: true,
+  //       message: "Passwords do not Match"
+  //     })
+  //   :
+  //     setPwdMatch({
+  //         error: false,
+  //         message: ''
+  //       })
+    
+
+    
+      
+    // (userObj.password === data.get('password2')) && dispatch(registerUser(userObj))
 
   };
 
   return (
 
       <Container component="main" maxWidth="xs">
-
         <Box
           sx={{
             marginTop: 8,
@@ -82,6 +135,10 @@ export default function Register() {
                   id="firstName"
                   label="First Name"
                   autoFocus
+                  // error={true}
+                  error={isValid.firstname.error}
+                  // helperText="Firstname is blank"
+                  helperText={isValid.firstname.message}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -92,6 +149,8 @@ export default function Register() {
                   label="Last Name"
                   name="lastName"
                   autoComplete="family-name"
+                  error={isValid.lastname.error}
+                  helperText={isValid.lastname.message}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -102,7 +161,8 @@ export default function Register() {
                   label="Email Address"
                   name="email"
                   autoComplete="email"
-                  // error={true}
+                  error={isValid.email.error}
+                  helperText={isValid.email.message}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -114,6 +174,8 @@ export default function Register() {
                   type="password"
                   id="password"
                   autoComplete="new-password"
+                  error={isValid.password.error}
+                  helperText={isValid.password.message}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -142,7 +204,7 @@ export default function Register() {
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
             >
-              Register
+              {(status === 'pending') ? <CircularProgress /> : "Register" }
             </Button>
             <Grid container justifyContent="flex-end">
               <Grid item>

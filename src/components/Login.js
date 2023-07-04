@@ -12,16 +12,56 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import {useDispatch, useSelector} from 'react-redux'
+import { login, resetStatus } from '../redux/usersSlice'
+import { CircularProgress } from '@mui/material';
+import {redirect, useNavigate} from 'react-router-dom'
 
 
 export default function Login() {
+  const users = useSelector(state => state.users)
+  const status = useSelector(state => state.users.status)
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
+
+  React.useEffect(() => {
+    if ( status === 'fulfilled' ) {
+      dispatch(resetStatus())
+      navigate('/', {replace: true})
+    }
+  }, [status])
+
+  const [isChecked, setIsChecked] = React.useState(true)
+  
+
   const handleSubmit = (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    console.log({
+    // console.log({
+    //   email: data.get('email'),
+    //   password: data.get('password'),
+    // });
+
+    //frontend handling the remember me
+    // let userObj = {
+    //   email: data.get('email'),
+    //   password: data.get('password'),
+    // };
+
+    // dispatch(login({
+    //   userObj: userObj,
+    //   isRemember: isChecked
+    // }))
+
+    //handle remember me in the backend
+    let userObj = {
       email: data.get('email'),
       password: data.get('password'),
-    });
+      isRemember: isChecked
+    };
+
+    dispatch(login(userObj))
+
   };
 
   return (
@@ -42,6 +82,9 @@ export default function Login() {
           <Typography component="h1" variant="h5">
             Login
           </Typography>
+          <Typography component="h2" variant="h6" sx={{color: 'red'}}>
+            {users.message}
+          </Typography>
           <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
             <TextField
               margin="normal"
@@ -52,6 +95,7 @@ export default function Login() {
               name="email"
               autoComplete="email"
               autoFocus
+              // helperText={users.message}
             />
             <TextField
               margin="normal"
@@ -64,7 +108,13 @@ export default function Login() {
               autoComplete="current-password"
             />
             <FormControlLabel
-              control={<Checkbox value="remember" color="primary" />}
+              control={
+              <Checkbox 
+                checked={isChecked} 
+                onChange={() => setIsChecked(!isChecked)} 
+                name="remember" 
+                color="primary" />
+              }
               label="Remember me"
             />
             <Button
@@ -72,8 +122,9 @@ export default function Login() {
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
-            >
-              Sign In
+            > { (status === 'pending') ? <CircularProgress /> : 'Sign In' }
+             
+              
             </Button>
             <Grid container>
               <Grid item xs>
@@ -83,7 +134,7 @@ export default function Login() {
               </Grid>
               <Grid item>
                 <Link href="/register" variant="body2">
-                  {"Don't have an account? Sign Up"}
+                 Don't have an account? Register Here!
                 </Link>
               </Grid>
             </Grid>
